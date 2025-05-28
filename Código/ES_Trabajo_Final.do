@@ -33,7 +33,7 @@ tostring cod_mpio, replace format(%05.0f)
 tempfile hogares
 save "hogares"
 
-import excel "C:\Users\samel\OneDrive\Datos adjuntos\Universidad de los Andes\IV\Econ Social\Trabajo Final\Código\hogares_mpio_2022.xlsx", firstrow clear
+import excel "hogares_mpio_2022.xlsx", firstrow clear
 drop añodeasignación
 tostring cod_mpio, replace format(%05.0f) 
 
@@ -47,7 +47,7 @@ export excel using "tratamiento_base_datos.xlsx", firstrow(variables) replace
 
 * ----- TERCERA PARTE ----- *
 
-import delimited "C:\Users\samel\OneDrive\Datos adjuntos\Universidad de los Andes\IV\Econ Social\Trabajo Final\Subsidios_De_Vivienda_Asignados_20250525.csv", clear
+import delimited "/Users/miguelblanco/Library/CloudStorage/OneDrive-Personal/Materias Uniandes/2025 10/Economia Social/Trabajo Final/ES_Trabajo_Final/Subsidios_De_Vivienda_Asignados_20250525.csv", clear
 
 * Arreglamos la base de datos (filtramos por MCY y año de asignación 2019 a 2024)
 tostring códigodivipolamunicipio, replace format(%05.0f)
@@ -73,7 +73,7 @@ tempfile muni6
 save `muni6'
 
 * Volvemos a importar la base original de subsidios
-import delimited "C:\Users\samel\OneDrive\Datos adjuntos\Universidad de los Andes\IV\Econ Social\Trabajo Final\Subsidios_De_Vivienda_Asignados_20250525.csv", clear
+import delimited "/Users/miguelblanco/Library/CloudStorage/OneDrive-Personal/Materias Uniandes/2025 10/Economia Social/Trabajo Final/ES_Trabajo_Final/Subsidios_De_Vivienda_Asignados_20250525.csv", clear
 
 * Aseguramos formato de código municipio
 tostring códigodivipolamunicipio, replace format(%05.0f)
@@ -95,12 +95,12 @@ export excel using "subsidios_asignados_por_mpio.xlsx", firstrow(variables) repl
 * ----- CUARTA PARTE ----- *
 * Vamos a unir tratamiento a la base de datos que tenemos por municipio en años
 
-import excel "C:\Users\samel\OneDrive\Datos adjuntos\Universidad de los Andes\IV\Econ Social\Trabajo Final\Código\tratamiento_base_datos.xlsx", firstrow clear
+import excel "tratamiento_base_datos.xlsx", firstrow clear
 keep cod_mpio proporcion_AB treatment
 tempfile tratamiento
-save "tratamiento"
+save "tratamiento", replace
 
-import excel "C:\Users\samel\OneDrive\Datos adjuntos\Universidad de los Andes\IV\Econ Social\Trabajo Final\Código\subsidios_asignados_por_mpio.xlsx", firstrow clear
+import excel "subsidios_asignados_por_mpio.xlsx", firstrow clear
 rename códigodivipolamunicipio cod_mpio
 
 merge m:1 cod_mpio using "tratamiento", keep(match) nogenerate
@@ -109,11 +109,11 @@ export excel using "base_final_asignados.xlsx", firstrow(variables) replace
 
 * ----- QUINTA PARTE ----- *
 * Agregar la población para generar la tasa_subsidio
-import excel "C:\Users\samel\OneDrive\Datos adjuntos\Universidad de los Andes\IV\Econ Social\Trabajo Final\Código\base_final_asignados.xlsx", firstrow clear
+import excel "base_final_asignados.xlsx", firstrow clear
 tempfile poblacion
-save "poblacion"
+save "poblacion", replace
 
-import excel "C:\Users\samel\OneDrive\Datos adjuntos\Universidad de los Andes\IV\Econ Social\Trabajo Final\Código\hogares_mpio.xlsx", firstrow clear
+import excel "hogares_mpio.xlsx", firstrow clear
 
 merge 1:1 cod_mpio añodeasignación using "poblacion", keep(match) nogenerate
 rename Hogares hogares_mpio
@@ -124,28 +124,30 @@ gen tasa_subsidio = (hogares_subsidio / hogares_mpio)*1000
 
 * Si se quiere hacer el análisis con un treatment_dummy, solo toma municipios de exposición baja o alta (alta sería tratamiento, baja sería control)
 * Calcular percentiles 25 y 75 nacionales de la exposición
-summarize treatment, detail
+summarize treatment_continuo, detail
 
 * Apunta los valores de p25 y p75 que aparecen (o usa lo siguiente para guardarlos):
-centile treatment, centile(25 75)
+centile treatment_continuo, centile(25 75)
 scalar p25 = r(c_1)
 scalar p75 = r(c_2)
 
 * 2. Crear la variable treatment_dummy
 gen treatment_dummy = .
-replace treatment_dummy = 1 if treatment > p75
-replace treatment_dummy = 0 if treatment < p25
+replace treatment_dummy = 1 if treatment_continuo > p75
+replace treatment_dummy = 0 if treatment_continuo < p25
 
 
 * ----- REGRESIÓN DEL MODELO ----- *
 * Variable que indica post_tratamiento e interacción efecto DiD
 gen post = añodeasignación >= 2023
-gen did = post * treatment
+gen did = post * treatment_continuo
+gen did2 = post*treatment_dummy
 
 export excel using "base_DiD.xlsx", firstrow(variables) replace
 
-import excel "C:\Users\samel\OneDrive\Datos adjuntos\Universidad de los Andes\IV\Econ Social\Trabajo Final\Código\base_DiD.xlsx", firstrow clear
+import delimited "/Users/miguelblanco/Library/CloudStorage/OneDrive-Personal/Materias Uniandes/2025 10/Economia Social/Trabajo Final/ES_Trabajo_Final/Co´digo/base_DiD.csv", firstrow clear
 encode cod_mpio, generate(cod_mpio_num)
 xtset cod_mpio_num añodeasignación
 
 xtreg tasa_subsidio did i.añodeasignación, fe vce(cluster cod_mpio)
+xtreg tasa_subsidio did2 i.añodeasignación, fe vce(cluster cod_mpio)
