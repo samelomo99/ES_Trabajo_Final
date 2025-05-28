@@ -155,6 +155,7 @@ xtreg tasa_subsidio did_dummy i.añodeasignación, fe vce(cluster cod_mpio)
 
 * ---- AGREGANDO CONTROLES --------- *
 
+*------Numero de personas en ruralidad-----------------
 * 1. Importar los datos desde "Table1"
 import excel "hogares_mpio_xx.xlsx", sheet("Table1") firstrow clear
 
@@ -204,6 +205,227 @@ merge 1:1 cod_mpio añodeasignación using "ruralidad", keep(match) nogenerate
 * 10. Guardar resultado
 export excel using "base_DiD.xlsx", firstrow(variables) replace
 
+*----------Licencias de Construccion ------------*
+* 1. Importar el archivo Excel
+import excel "Licencias_construccion.xlsx", sheet("elic (2)") firstrow clear
+
+* 2. Verifica nombres de variables
+describe
+
+* 3. Filtrar las observaciones de interés
+keep if obj_tra == 1 & modalidad == 1 & destino == 1
+
+* 4. Filtrar entre 2018 y 2023
+keep if inrange(año, 2018, 2023)
+
+* 5. Contar el número de licencias por municipio y año
+
+collapse (sum) licencia, by(cod_mun año)
+
+* 6.  Renombrar las variables
+
+rename cod_mun cod_mpio
+rename año añodeasignación
+
+
+* 7. Guardar los resultados
+tempfile licencias
+save "licencias", replace
+
+* 8. Cargar base DiD
+import excel "base_DiD.xlsx", firstrow clear
+tostring cod_mpio, replace format(%05.0f)
+destring añodeasignación, replace
+
+* 9. Unir con la base de ruralidad
+merge 1:1 cod_mpio añodeasignación using "licencias", keep(match) nogenerate
+
+* 10. Guardar resultado
+export excel using "base_DiD.xlsx", firstrow(variables) replace
+
+*----------Licencias de Construccion vivienda VIS ------------*
+* 1. Importar el archivo Excel
+import excel "Licencias_construccion.xlsx", sheet("elic (2)") firstrow clear
+
+* 2. Verifica nombres de variables
+describe
+
+* 3. Filtrar las observaciones de interés
+keep if obj_tra == 1 & modalidad == 1 & destino == 1 & VIS_NVIS == 1
+* 4. Filtrar entre 2018 y 2023
+keep if inrange(año, 2018, 2023)
+
+* 5. Contar el número de licencias por municipio y año
+
+collapse (sum) licencia, by(cod_mun año)
+
+* 6.  Renombrar las variables
+
+rename cod_mun cod_mpio
+rename año añodeasignación
+rename licencias licencias_vis
+
+
+* 7. Guardar los resultados
+tempfile licencias_vis
+save "licencias_vis", replace
+
+* 8. Cargar base DiD
+import excel "base_DiD.xlsx", firstrow clear
+tostring cod_mpio, replace format(%05.0f)
+destring añodeasignación, replace
+
+* 9. Unir con la base de ruralidad
+merge 1:1 cod_mpio añodeasignación using "licencias_vis", keep(match) nogenerate
+
+* 10. Guardar resultado
+export excel using "base_DiD.xlsx", firstrow(variables) replace
+
+*----------Licencias de Construccion vivienda VIP ------------*
+* 1. Importar el archivo Excel
+import excel "Licencias_construccion.xlsx", sheet("elic (2)") firstrow clear
+
+* 2. Verifica nombres de variables
+describe
+
+* 3. Filtrar las observaciones de interés
+keep if obj_tra == 1 & modalidad == 1 & destino == 1 & VIS_NVIS == 3
+* 4. Filtrar entre 2018 y 2023
+keep if inrange(año, 2018, 2023)
+
+* 5. Contar el número de licencias por municipio y año
+
+collapse (sum) licencia, by(cod_mun año)
+
+* 6.  Renombrar las variables
+
+rename cod_mun cod_mpio
+rename año añodeasignación
+rename licencias licencias_vip
+
+
+* 7. Guardar los resultados
+tempfile licencias_vip
+save "licencias_vip", replace
+
+* 8. Cargar base DiD
+import excel "base_DiD.xlsx", firstrow clear
+tostring cod_mpio, replace format(%05.0f)
+destring añodeasignación, replace
+
+* 9. Unir con la base de ruralidad
+merge 1:1 cod_mpio añodeasignación using "licencias_vip", keep(match) nogenerate
+
+* 10. Guardar resultado
+export excel using "base_DiD.xlsx", firstrow(variables) replace
+
+*-------- y con las unidades ------------------*
+* 1. Importar el archivo Excel
+import excel "Licencias_construccion.xlsx", sheet("elic (2)") firstrow clear
+
+* 2. Verifica nombres de variables
+describe
+
+* 3. Filtrar las observaciones de interés
+keep if obj_tra == 1 & modalidad == 1 & destino == 1
+
+* 4. Filtrar entre 2018 y 2023
+keep if inrange(año, 2018, 2023)
+
+* 5. Contar el número de unidades por municipio y año
+collapse (sum) unidades, by(cod_mun año)
+
+* 6.  Renombrar las variables
+rename cod_mun cod_mpio
+rename año añodeasignación
+
+* 7. Guardar los resultados
+tempfile unidades
+save "unidades", replace
+
+* 8. Cargar base DiD
+import excel "base_DiD.xlsx", firstrow clear
+tostring cod_mpio, replace format(%05.0f)
+destring añodeasignación, replace
+
+* 9. Unir con la base de ruralidad
+merge 1:1 cod_mpio añodeasignación using "unidades", keep(match) nogenerate
+
+* 10. Guardar resultado
+export excel using "base_DiD.xlsx", firstrow(variables) replace
+
+*----------Unidades vivienda VIS ------------*
+* 1. Importar el archivo Excel
+import excel "Licencias_construccion.xlsx", sheet("elic (2)") firstrow clear
+
+* 2. Verifica nombres de variables
+describe
+
+* 3. Filtrar las observaciones de interés
+keep if obj_tra == 1 & modalidad == 1 & destino == 1 & VIS_NVIS == 1
+
+* 4. Filtrar entre 2018 y 2023
+keep if inrange(año, 2018, 2023)
+
+* 5. Contar el número de unidades por municipio y año
+collapse (sum) unidades, by(cod_mun año)
+
+* 6.  Renombrar las variables
+rename cod_mun cod_mpio
+rename año añodeasignación
+rename unidades unidades_vis
+
+* 7. Guardar los resultados
+tempfile unidades_vis
+save "unidades_vis", replace
+
+* 8. Cargar base DiD
+import excel "base_DiD.xlsx", firstrow clear
+tostring cod_mpio, replace format(%05.0f)
+destring añodeasignación, replace
+
+* 9. Unir con la base de ruralidad
+merge 1:1 cod_mpio añodeasignación using "unidades_vis", keep(match) nogenerate
+
+* 10. Guardar resultado
+export excel using "base_DiD.xlsx", firstrow(variables) replace
+
+*----------Unidades vivienda VIP ------------*
+* 1. Importar el archivo Excel
+import excel "Licencias_construccion.xlsx", sheet("elic (2)") firstrow clear
+
+* 2. Verifica nombres de variables
+describe
+
+* 3. Filtrar las observaciones de interés
+keep if obj_tra == 1 & modalidad == 1 & destino == 1 & VIS_NVIS == 3
+
+* 4. Filtrar entre 2018 y 2023
+keep if inrange(año, 2018, 2023)
+
+* 5. Contar el número de unidades por municipio y año
+collapse (sum) unidades, by(cod_mun año)
+
+* 6.  Renombrar las variables
+rename cod_mun cod_mpio
+rename año añodeasignación
+rename unidades unidades_vip
+
+* 7. Guardar los resultados
+tempfile unidades_vip
+save "unidades_vip", replace
+
+* 8. Cargar base DiD
+import excel "base_DiD.xlsx", firstrow clear
+tostring cod_mpio, replace format(%05.0f)
+destring añodeasignación, replace
+
+* 9. Unir con la base de ruralidad
+merge 1:1 cod_mpio añodeasignación using "unidades_vip", keep(match) nogenerate
+
+* 10. Guardar resultado
+export excel using "base_DiD.xlsx", firstrow(variables) replace
+
 
 *------ REGRESION DE MODELO CON CONTROLES ----------*
 
@@ -211,6 +433,6 @@ import delimited "base_DiD.xlsx", firstrow clear
 encode cod_mpio, generate(cod_mpio_num)
 xtset cod_mpio_num añodeasignación
 
-xtreg tasa_subsidio did_continuio i.añodeasignación prop_rural, fe vce(cluster cod_mpio)
-xtreg tasa_subsidio did_dummy i.añodeasignación prop_rural, fe vce(cluster cod_mpio)
+xtreg tasa_subsidio did_continuio i.añodeasignación prop_rural licencias, fe vce(cluster cod_mpio)
+xtreg tasa_subsidio did_dummy i.añodeasignación prop_rural licencias, fe vce(cluster cod_mpio)
 
