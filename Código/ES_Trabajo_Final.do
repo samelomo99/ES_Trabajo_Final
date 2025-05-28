@@ -2,7 +2,7 @@
 
 clear all
 
- cd "/Users/miguelblanco/Library/CloudStorage/OneDrive-Personal/Materias Uniandes/2025 10/Economia Social/Trabajo Final/ES_Trabajo_Final/Código"
+ cd "/Users/miguelblanco/Library/CloudStorage/OneDrive-Personal/Materias Uniandes/2025 10/Economia Social/Trabajo Final/ES_Trabajo_Final/Código" //Recuerde cambiar el directorio para que todo funcione bien:)
 
 
 * ----- PRIMERA PARTE ----- *
@@ -429,10 +429,18 @@ export excel using "base_DiD.xlsx", firstrow(variables) replace
 
 *------ REGRESION DE MODELO CON CONTROLES ----------*
 
-import delimited "base_DiD.xlsx", firstrow clear
+import excel "base_DiD.xlsx", firstrow clear // recuerde cambiar el directorio o la ruta para que el modelo corra
 encode cod_mpio, generate(cod_mpio_num)
 xtset cod_mpio_num añodeasignación
 
 xtreg tasa_subsidio did_continuio i.añodeasignación prop_rural licencias, fe vce(cluster cod_mpio)
 xtreg tasa_subsidio did_dummy i.añodeasignación prop_rural licencias, fe vce(cluster cod_mpio)
 
+xtreg tasa_subsidio did_continuio i.añodeasignación prop_rural licencias_vis licencias_vip, fe vce(cluster cod_mpio)
+xtreg tasa_subsidio did_dummy i.añodeasignación prop_rural licencias_vis licencias_vip, fe vce(cluster cod_mpio)
+
+xtreg tasa_subsidio did_continuio i.añodeasignación prop_rural unidades, fe vce(cluster cod_mpio)
+xtreg tasa_subsidio did_dummy i.añodeasignación prop_rural unidades, fe vce(cluster cod_mpio)
+
+xtreg tasa_subsidio did_continuio i.añodeasignación prop_rural unidades_vis unidades_vip, fe vce(cluster cod_mpio)
+xtreg tasa_subsidio did_dummy i.añodeasignación prop_rural unidades_vis unidades_vip, fe vce(cluster cod_mpio)
