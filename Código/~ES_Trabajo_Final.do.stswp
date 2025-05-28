@@ -2,7 +2,8 @@
 
 clear all
 
-cd "C:\Users\samel\OneDrive\Datos adjuntos\Universidad de los Andes\IV\Econ Social\Trabajo Final\Código"
+ cd "/Users/miguelblanco/Library/CloudStorage/OneDrive-Personal/Materias Uniandes/2025 10/Economia Social/Trabajo Final/ES_Trabajo_Final/Código"
+
 
 * ----- PRIMERA PARTE ----- *
 import delimited "C:\Users\samel\OneDrive\Datos adjuntos\Universidad de los Andes\IV\Econ Social\Trabajo Final\DNP_-_Sisb_n_Personas_20250525.csv", clear
@@ -140,14 +141,76 @@ replace treatment_dummy = 0 if treatment_continuo < p25
 * ----- REGRESIÓN DEL MODELO ----- *
 * Variable que indica post_tratamiento e interacción efecto DiD
 gen post = añodeasignación >= 2023
-gen did = post * treatment_continuo
-gen did2 = post*treatment_dummy
+gen did_continuio = post * treatment_continuo
+gen did_dummy = post*treatment_dummy
 
 export excel using "base_DiD.xlsx", firstrow(variables) replace
 
-import delimited "/Users/miguelblanco/Library/CloudStorage/OneDrive-Personal/Materias Uniandes/2025 10/Economia Social/Trabajo Final/ES_Trabajo_Final/Co´digo/base_DiD.csv", firstrow clear
+import delimited "base_DiD.xlsx", firstrow clear
 encode cod_mpio, generate(cod_mpio_num)
 xtset cod_mpio_num añodeasignación
 
-xtreg tasa_subsidio did i.añodeasignación, fe vce(cluster cod_mpio)
-xtreg tasa_subsidio did2 i.añodeasignación, fe vce(cluster cod_mpio)
+xtreg tasa_subsidio did_continuio i.añodeasignación, fe vce(cluster cod_mpio)
+xtreg tasa_subsidio did_dummy i.añodeasignación, fe vce(cluster cod_mpio)
+
+* ---- AGREGANDO CONTROLES --------- *
+
+* 1. Importar los datos desde "Table1"
+import excel "hogares_mpio_xx.xlsx", sheet("Table1") firstrow clear
+
+* 2. Asegurar nombres correctos y tipos
+rename CódigoMunicipio cod_mpio
+rename Área area
+rename Value poblacion
+rename Attribute año
+tostring cod_mpio, replace format(%05.0f)
+destring año, replace
+
+
+* 3. Codificamos el área para usar en reshape
+encode area, gen(area_id)
+keep cod_mpio año area_id poblacion
+
+
+* 4. Hacemos reshape usando area_id como j()
+reshape wide poblacion, i(cod_mpio año) j(area_id)
+
+* 5. Verifica cuál es cuál (consulta la codificación)
+label list area_id
+
+* Digamos que:
+* area_id==1 corresponde a "Cabecera"
+* area_id==2 corresponde a "Centros Poblados y Rural Disperso"
+* area_id==3 corresponde a "Total"
+* Puedes verificar eso y ajustar si no coinciden
+
+* 6. Crear proporción de ruralidad
+gen prop_rural = poblacion2 / poblacion3  // Rural disperso / Total
+
+* 7. Mantener solo lo necesario
+keep cod_mpio año prop_rural
+rename año añodeasignación
+tempfile ruralidad
+save "ruralidad"
+
+* 8. Cargar base DiD
+import excel "base_DiD.xlsx", firstrow clear
+tostring cod_mpio, replace format(%05.0f)
+destring añodeasignación, replace
+
+* 9. Unir con la base de ruralidad
+merge 1:1 cod_mpio añodeasignación using "ruralidad", keep(match) nogenerate
+
+* 10. Guardar resultado
+export excel using "base_DiD.xlsx", firstrow(variables) replace
+
+
+*------ REGRESION DE MODELO CON CONTROLES ----------*
+
+import delimited "base_DiD.xlsx", firstrow clear
+encode cod_mpio, generate(cod_mpio_num)
+xtset cod_mpio_num añodeasignación
+
+xtreg tasa_subsidio did_continuio i.añodeasignación prop_rural, fe vce(cluster cod_mpio)
+xtreg tasa_subsidio did_dummy i.añodeasignación prop_rural, fe vce(cluster cod_mpio)
+
