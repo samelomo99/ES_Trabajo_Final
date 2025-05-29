@@ -71,7 +71,7 @@ keep if total_anios == 6
 keep códigodivipolamunicipio
 duplicates drop
 tempfile muni6
-save `muni6'
+save "muni6", replace
 
 * Volvemos a importar la base original de subsidios
 import delimited "/Users/miguelblanco/Library/CloudStorage/OneDrive-Personal/Materias Uniandes/2025 10/Economia Social/Trabajo Final/ES_Trabajo_Final/Subsidios_De_Vivienda_Asignados_20250525.csv", clear
@@ -86,7 +86,7 @@ keep if estadodepostulación == "Asignados"
 keep if inrange(añodeasignación, 2019, 2024)
 
 * Hacemos merge para dejar solo los municipios que tuvieron asignación en todos los 6 años
-merge m:1 códigodivipolamunicipio using `muni6', keep(match) nogenerate
+merge m:1 códigodivipolamunicipio using "muni6", keep(match) nogenerate
 
 * Sumamos el número de subsidios asignados por municipio y año
 collapse (sum) hogares, by(municipio códigodivipolamunicipio añodeasignación )
@@ -146,12 +146,12 @@ gen did_dummy = post*treatment_dummy
 
 export excel using "base_DiD.xlsx", firstrow(variables) replace
 
-import delimited "base_DiD.xlsx", firstrow clear
+import excel "base_DiD.xlsx", firstrow clear
 encode cod_mpio, generate(cod_mpio_num)
 xtset cod_mpio_num añodeasignación
 
-xtreg tasa_subsidio did_continuio i.añodeasignación, fe vce(cluster cod_mpio)
 xtreg tasa_subsidio did_dummy i.añodeasignación, fe vce(cluster cod_mpio)
+xtreg tasa_subsidio post treatment_dummy did_dummy i.añodeasignación, fe vce(cluster cod_mpio)
 
 * ---- AGREGANDO CONTROLES --------- *
 
@@ -192,7 +192,7 @@ gen prop_rural = poblacion2 / poblacion3  // Rural disperso / Total
 keep cod_mpio año prop_rural
 rename año añodeasignación
 tempfile ruralidad
-save "ruralidad"
+save "ruralidad", replace
 
 * 8. Cargar base DiD
 import excel "base_DiD.xlsx", firstrow clear
@@ -215,8 +215,8 @@ describe
 * 3. Filtrar las observaciones de interés
 keep if obj_tra == 1 & modalidad == 1 & destino == 1
 
-* 4. Filtrar entre 2018 y 2023
-keep if inrange(año, 2018, 2023)
+* 4. Filtrar entre 2018 y 2024
+keep if inrange(año, 2018, 2024)
 
 * 5. Contar el número de licencias por municipio y año
 
@@ -238,7 +238,7 @@ tostring cod_mpio, replace format(%05.0f)
 destring añodeasignación, replace
 
 * 9. Unir con la base de ruralidad
-merge 1:1 cod_mpio añodeasignación using "licencias", keep(match) nogenerate
+merge 1:1 cod_mpio añodeasignación using "licencias", keep(master match) nogenerate
 
 * 10. Guardar resultado
 export excel using "base_DiD.xlsx", firstrow(variables) replace
@@ -252,8 +252,8 @@ describe
 
 * 3. Filtrar las observaciones de interés
 keep if obj_tra == 1 & modalidad == 1 & destino == 1 & VIS_NVIS == 1
-* 4. Filtrar entre 2018 y 2023
-keep if inrange(año, 2018, 2023)
+* 4. Filtrar entre 2018 y 2024
+keep if inrange(año, 2018, 2024)
 
 * 5. Contar el número de licencias por municipio y año
 
@@ -276,7 +276,7 @@ tostring cod_mpio, replace format(%05.0f)
 destring añodeasignación, replace
 
 * 9. Unir con la base de ruralidad
-merge 1:1 cod_mpio añodeasignación using "licencias_vis", keep(match) nogenerate
+merge 1:1 cod_mpio añodeasignación using "licencias_vis", keep(master match) nogenerate
 
 * 10. Guardar resultado
 export excel using "base_DiD.xlsx", firstrow(variables) replace
@@ -290,8 +290,8 @@ describe
 
 * 3. Filtrar las observaciones de interés
 keep if obj_tra == 1 & modalidad == 1 & destino == 1 & VIS_NVIS == 3
-* 4. Filtrar entre 2018 y 2023
-keep if inrange(año, 2018, 2023)
+* 4. Filtrar entre 2018 y 2024
+keep if inrange(año, 2018, 2024)
 
 * 5. Contar el número de licencias por municipio y año
 
@@ -314,7 +314,7 @@ tostring cod_mpio, replace format(%05.0f)
 destring añodeasignación, replace
 
 * 9. Unir con la base de ruralidad
-merge 1:1 cod_mpio añodeasignación using "licencias_vip", keep(match) nogenerate
+merge 1:1 cod_mpio añodeasignación using "licencias_vip", keep(master match) nogenerate
 
 * 10. Guardar resultado
 export excel using "base_DiD.xlsx", firstrow(variables) replace
@@ -329,8 +329,8 @@ describe
 * 3. Filtrar las observaciones de interés
 keep if obj_tra == 1 & modalidad == 1 & destino == 1
 
-* 4. Filtrar entre 2018 y 2023
-keep if inrange(año, 2018, 2023)
+* 4. Filtrar entre 2018 y 2024
+keep if inrange(año, 2018, 2024)
 
 * 5. Contar el número de unidades por municipio y año
 collapse (sum) unidades, by(cod_mun año)
@@ -349,7 +349,7 @@ tostring cod_mpio, replace format(%05.0f)
 destring añodeasignación, replace
 
 * 9. Unir con la base de ruralidad
-merge 1:1 cod_mpio añodeasignación using "unidades", keep(match) nogenerate
+merge 1:1 cod_mpio añodeasignación using "unidades", keep(master match) nogenerate
 
 * 10. Guardar resultado
 export excel using "base_DiD.xlsx", firstrow(variables) replace
@@ -364,8 +364,8 @@ describe
 * 3. Filtrar las observaciones de interés
 keep if obj_tra == 1 & modalidad == 1 & destino == 1 & VIS_NVIS == 1
 
-* 4. Filtrar entre 2018 y 2023
-keep if inrange(año, 2018, 2023)
+* 4. Filtrar entre 2018 y 2024
+keep if inrange(año, 2018, 2024)
 
 * 5. Contar el número de unidades por municipio y año
 collapse (sum) unidades, by(cod_mun año)
@@ -385,7 +385,7 @@ tostring cod_mpio, replace format(%05.0f)
 destring añodeasignación, replace
 
 * 9. Unir con la base de ruralidad
-merge 1:1 cod_mpio añodeasignación using "unidades_vis", keep(match) nogenerate
+merge 1:1 cod_mpio añodeasignación using "unidades_vis", keep(master match) nogenerate
 
 * 10. Guardar resultado
 export excel using "base_DiD.xlsx", firstrow(variables) replace
@@ -400,8 +400,8 @@ describe
 * 3. Filtrar las observaciones de interés
 keep if obj_tra == 1 & modalidad == 1 & destino == 1 & VIS_NVIS == 3
 
-* 4. Filtrar entre 2018 y 2023
-keep if inrange(año, 2018, 2023)
+* 4. Filtrar entre 2018 y 2024
+keep if inrange(año, 2018, 2024)
 
 * 5. Contar el número de unidades por municipio y año
 collapse (sum) unidades, by(cod_mun año)
@@ -421,11 +421,18 @@ tostring cod_mpio, replace format(%05.0f)
 destring añodeasignación, replace
 
 * 9. Unir con la base de ruralidad
-merge 1:1 cod_mpio añodeasignación using "unidades_vip", keep(match) nogenerate
+merge 1:1 cod_mpio añodeasignación using "unidades_vip", keep(master match) nogenerate
 
 * 10. Guardar resultado
 export excel using "base_DiD.xlsx", firstrow(variables) replace
 
+* Eliminamos las Missings y las reemplazamos por 0
+
+foreach var in licencias licencias_vip licencias_vis unidades unidades_vis unidades_vip {
+    replace `var' = 0 if missing(`var')
+}
+* Guardamos
+export excel using "base_DiD.xlsx", firstrow(variables) replace
 
 *------ REGRESION DE MODELO CON CONTROLES ----------*
 
@@ -433,14 +440,74 @@ import excel "base_DiD.xlsx", firstrow clear // recuerde cambiar el directorio o
 encode cod_mpio, generate(cod_mpio_num)
 xtset cod_mpio_num añodeasignación
 
-xtreg tasa_subsidio did_continuio i.añodeasignación prop_rural licencias, fe vce(cluster cod_mpio)
+xtreg tasa_subsidio did_dummy i.añodeasignación prop_rural, fe vce(cluster cod_mpio)
+
 xtreg tasa_subsidio did_dummy i.añodeasignación prop_rural licencias, fe vce(cluster cod_mpio)
 
-xtreg tasa_subsidio did_continuio i.añodeasignación prop_rural licencias_vis licencias_vip, fe vce(cluster cod_mpio)
 xtreg tasa_subsidio did_dummy i.añodeasignación prop_rural licencias_vis licencias_vip, fe vce(cluster cod_mpio)
 
-xtreg tasa_subsidio did_continuio i.añodeasignación prop_rural unidades, fe vce(cluster cod_mpio)
 xtreg tasa_subsidio did_dummy i.añodeasignación prop_rural unidades, fe vce(cluster cod_mpio)
 
-xtreg tasa_subsidio did_continuio i.añodeasignación prop_rural unidades_vis unidades_vip, fe vce(cluster cod_mpio)
 xtreg tasa_subsidio did_dummy i.añodeasignación prop_rural unidades_vis unidades_vip, fe vce(cluster cod_mpio)
+
+*---------- TENDENCIAS PARALELAS ---------------------*
+
+* VERISON GRAFICA
+* Asegúrate de tener la base con valores originales
+use "base_DiD.xlsx", clear
+tostring cod_mpio, replace format(%05.0f)
+destring añodeasignación, replace
+
+* Calcular promedios por grupo y año
+collapse (mean) tasa_subsidio, by(treatment_dummy añodeasignación)
+
+* Graficar con línea vertical en 2023
+twoway ///
+  (line tasa_subsidio añodeasignación if treatment_dummy==1, sort lcolor(blue) lpattern(solid)) ///
+  (line tasa_subsidio añodeasignación if treatment_dummy==0, sort lcolor(red) lpattern(dash)) ///
+  , ///
+  xline(2023, lpattern(shortdash) lcolor(black)) ///
+  legend(label(1 "Tratamiento") label(2 "Control")) ///
+  title("Tendencias paralelas: tasa de subsidios") ///
+  ytitle("Tasa de subsidios") ///
+  xtitle("Año de asignación")
+
+
+	   
+* MODELO PLACEBO CON INTERACCIONES EN AÑOS PRETRATAMIENTO 
+* Paso 1: Crear variable placebo: 1 si año >= 2022 y grupo de tratamiento
+gen placebo_dummy = (añodeasignación >= 2022 & treatment_dummy == 1)
+
+* Paso 2: Estimar modelo de diferencias en diferencias con placebo
+xtreg tasa_subsidio placebo_dummy i.añodeasignación, fe vce(cluster cod_mpio)
+
+* Paso 3: Interpretar el coeficiente de placebo_dummy
+* Si el coeficiente es significativo, puede haber violación del supuesto de tendencias paralelas
+
+* ESTUDIO DE EVENTOS 
+
+* Crear variable de tiempo relativo: tratamiento en 2024
+replace rel_year = añodeasignación - 2023
+replace rel_year2 = rel_year + 4
+
+
+* Crear dummies de tiempo relativo
+tab rel_year2, gen(rel_yr2)
+
+* Estimar modelo de event study
+xtreg tasa_subsidio i.rel_year2##i.treatment_dummy, fe vce(cluster cod_mpio)
+
+
+* Guardar los coeficientes del evento (años relativos)
+margins rel_year2#treatment_dummy
+
+* Graficar los efectos relativos del tratamiento
+marginsplot, ///
+    recast(line) ///
+    ciopts(recast(rline)) ///
+    xline(4, lpattern(shortdash) lcolor(black)) ///
+    title("Estudio de Eventos: efectos relativos del tratamiento") ///
+    ytitle("Efecto sobre tasa de subsidio") ///
+    xtitle("Años relativos al tratamiento (2023 = año 0)") ///
+    legend(off)
+
